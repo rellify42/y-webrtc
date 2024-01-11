@@ -1,5 +1,5 @@
 {
-  "name": "y-webrtc",
+  "name": "@rellify42/y-webrtc",
   "version": "10.3.0",
   "description": "WebRTC provider for Yjs",
   "type": "module",
@@ -38,9 +38,12 @@
     "bin/*",
     "src/*"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yjs/y-webrtc.git"
+    "url": "https://github.com/rellify42/y-webrtc.git"
   },
   "keywords": [
     "Yjs"

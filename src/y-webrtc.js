@@ -270,7 +270,7 @@ const announceSignalingInfo = room => {
   signalingConns.forEach(conn => {
     // only subscribe if connection is established, otherwise the conn automatically subscribes to all rooms
     if (conn.connected) {
-      conn.send({ type: 'subscribe', topics: [room.name] })
+      conn.send({ type: 'subscribe', channel: room.name, ...room.provider.additional })
       if (room.webrtcConns.size < room.provider.maxConns) {
         publishSignalingMessage(conn, room, { type: 'announce', from: room.peerId })
       }
@@ -413,7 +413,7 @@ export class Room {
     // signal through all available signaling connections
     signalingConns.forEach(conn => {
       if (conn.connected) {
-        conn.send({ type: 'unsubscribe', topics: [this.name] })
+        conn.send({ type: 'unsubscribe', channel: this.name })
       }
     })
     awarenessProtocol.removeAwarenessStates(this.awareness, [this.doc.clientID], 'disconnect')
@@ -466,10 +466,10 @@ const openRoom = (doc, provider, name, key) => {
 const publishSignalingMessage = (conn, room, data) => {
   if (room.key) {
     cryptoutils.encryptJson(data, room.key).then(data => {
-      conn.send({ type: 'publish', topic: room.name, data: buffer.toBase64(data) })
+      conn.send({ type: 'publish', channel: room.name, data: buffer.toBase64(data) })
     })
   } else {
-    conn.send({ type: 'publish', topic: room.name, data })
+    conn.send({ type: 'publish', channel: room.name, data })
   }
 }
 
@@ -482,8 +482,8 @@ export class SignalingConn extends ws.WebsocketClient {
     this.providers = new Set()
     this.on('connect', () => {
       log(`connected (${url})`)
-      const topics = Array.from(rooms.keys())
-      this.send({ type: 'subscribe', topics })
+      const channel = Array.from(rooms.keys())
+      this.send({ type: 'subscribe', channel })
       rooms.forEach(room =>
         publishSignalingMessage(this, room, { type: 'announce', from: room.peerId })
       )
@@ -491,7 +491,7 @@ export class SignalingConn extends ws.WebsocketClient {
     this.on('message', m => {
       switch (m.type) {
         case 'publish': {
-          const roomName = m.topic
+          const roomName = m.channel
           const room = rooms.get(roomName)
           if (room == null || typeof roomName !== 'string') {
             return
@@ -593,6 +593,7 @@ export class WebrtcProvider extends ObservableV2 {
    * @param {string} roomName
    * @param {Y.Doc} doc
    * @param {ProviderOptions?} opts
+   * @param {object} additional
    */
   constructor (
     roomName,
@@ -604,9 +605,11 @@ export class WebrtcProvider extends ObservableV2 {
       maxConns = 20 + math.floor(random.rand() * 15), // the random factor reduces the chance that n clients form a cluster
       filterBcConns = true,
       peerOpts = {} // simple-peer options. See https://github.com/feross/simple-peer#peer--new-peeropts
-    } = {}
+    } = {},
+    additional = {}
   ) {
     super()
+    this.additional = additional;
     this.roomName = roomName
     this.doc = doc
     this.filterBcConns = filterBcConns
