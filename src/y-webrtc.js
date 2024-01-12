@@ -305,7 +305,7 @@ export class Room {
      *
      * @type {string}
      */
-    this.peerId = random.uuidv4()
+    this.peerId = provider.additional?.clientToken ?? random.uuidv4()
     this.doc = doc
     /**
      * @type {awarenessProtocol.Awareness}
