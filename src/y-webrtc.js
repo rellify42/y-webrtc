@@ -482,10 +482,11 @@ export class SignalingConn extends ws.WebsocketClient {
     this.providers = new Set()
     this.on('connect', () => {
       log(`connected (${url})`)
-      const channel = Array.from(rooms.keys())
-      this.send({ type: 'subscribe', channel })
       rooms.forEach(room =>
-        publishSignalingMessage(this, room, { type: 'announce', from: room.peerId })
+        {
+          this.send({ type: 'subscribe', channel: room.name, ...room.provider.additional })
+          publishSignalingMessage(this, room, { type: 'announce', from: room.peerId });
+        }
       )
     })
     this.on('message', m => {
