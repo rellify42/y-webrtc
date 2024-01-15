@@ -554,6 +554,19 @@ export class SignalingConn extends ws.WebsocketClient {
             execMessage(m.data)
           }
         }
+        case 'syncStep1':
+        case 'syncStep2': {
+          const roomName = m.channel
+          const room = rooms.get(roomName)
+          if (room == null || typeof roomName !== 'string') {
+            return
+          }
+
+          const decoder = decoding.createDecoder(buffer.fromBase64(m.payload));
+          const encoder = encoding.createEncoder();
+          syncProtocol.readSyncMessage(decoder, encoder, room.doc, room);
+          break;
+        }
       }
     })
     this.on('disconnect', () => log(`disconnect (${url})`))
