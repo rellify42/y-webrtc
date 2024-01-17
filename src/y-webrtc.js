@@ -80,6 +80,12 @@ const readMessage = (room, buf, syncedCallback) => {
       if (syncMessageType === syncProtocol.messageYjsSyncStep1) {
         sendReply = true
       }
+
+      // Mark the document as being loaded
+      if (syncMessageType === syncProtocol.messageYjsSyncStep2 && !room.doc.isLoaded) {
+        room.doc.emit('load', []);
+      }
+
       break
     }
     case messageQueryAwareness:
@@ -553,6 +559,8 @@ export class SignalingConn extends ws.WebsocketClient {
           } else {
             execMessage(m.data)
           }
+
+          break;
         }
         case 'syncStep1':
         case 'syncStep2': {
@@ -564,7 +572,13 @@ export class SignalingConn extends ws.WebsocketClient {
 
           const decoder = decoding.createDecoder(buffer.fromBase64(m.payload));
           const encoder = encoding.createEncoder();
-          syncProtocol.readSyncMessage(decoder, encoder, room.doc, room);
+          const syncStep = syncProtocol.readSyncMessage(decoder, encoder, room.doc, room);
+
+          // Mark the document as being loaded
+          if (syncStep === syncProtocol.messageYjsSyncStep2 && !room.doc.isLoaded) {
+            room.doc.emit('load', []);
+          }
+
           break;
         }
       }
