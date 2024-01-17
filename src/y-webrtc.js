@@ -455,10 +455,13 @@ export class Room {
  * @return {Room}
  */
 const openRoom = (doc, provider, name, key) => {
-  // there must only be one room
+  // Destroy an existing room
   if (rooms.has(name)) {
-    throw error.create(`A Yjs Doc connected to room "${name}" already exists!`)
+    const existingRoom = rooms.get(name);
+    existingRoom.destroy();
   }
+
+  // Create a new room
   const room = new Room(doc, provider, name, key)
   rooms.set(name, /** @type {Room} */ (room))
   return room
@@ -564,10 +567,10 @@ export class SignalingConn extends ws.WebsocketClient {
         }
         case 'syncStep1':
         case 'syncStep2': {
-          const roomName = m.channel
-          const room = rooms.get(roomName)
+          const roomName = m.channel;
+          const room = rooms.get(roomName);
           if (room == null || typeof roomName !== 'string') {
-            return
+            return;
           }
 
           const decoder = decoding.createDecoder(buffer.fromBase64(m.payload));
