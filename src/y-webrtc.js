@@ -574,12 +574,35 @@ export class SignalingConn extends ws.WebsocketClient {
           }
 
           const decoder = decoding.createDecoder(buffer.fromBase64(m.payload));
-          const encoder = encoding.createEncoder();
-          const syncStep = syncProtocol.readSyncMessage(decoder, encoder, room.doc, room);
+          const messageType = decoding.readVarUint(decoder);
 
-          // Mark the document as being loaded
-          if (syncStep === syncProtocol.messageYjsSyncStep2 && !room.doc.isLoaded) {
-            room.doc.emit('load', []);
+          if (messageType === syncProtocol.messageYjsSyncStep1) {
+            const encoder = encoding.createEncoder();
+            syncProtocol.readSyncStep1(decoder, encoder, room.doc);
+          }
+
+          if (messageType === syncProtocol.messageYjsSyncStep2) {
+            room.doc.transact(() => {
+              // Empty the elements, because we get the new data from the BE
+              room.doc.share.forEach((item, key) => {
+                if (item instanceof Y.Text || item instanceof Y.Array) {
+                  item.delete(0, item.length);
+                }
+                else if (item instanceof Y.Map) {
+                  item.clear();
+                }
+                else {
+                  console.warn(`Couldn't empty ${key} before getting initial data from the BE.`)
+                }
+              });
+
+              syncProtocol.readSyncStep2(decoder, room.doc, 'BE');
+            }, 'BE');
+
+            // Mark the document as being loaded
+            if (!room.doc.isLoaded) {
+              room.doc.emit('load', []);
+            }
           }
 
           break;
