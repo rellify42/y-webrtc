@@ -276,7 +276,7 @@ const announceSignalingInfo = room => {
   signalingConns.forEach(conn => {
     // only subscribe if connection is established, otherwise the conn automatically subscribes to all rooms
     if (conn.connected) {
-      conn.send({ type: 'subscribe', channel: room.name, ...room.provider.additional })
+      conn.send({ type: 'subscribe', channelId: room.name, ...room.provider.additional })
       if (room.webrtcConns.size < room.provider.maxConns) {
         publishSignalingMessage(conn, room, { type: 'announce', from: room.peerId })
       }
@@ -419,7 +419,7 @@ export class Room {
     // signal through all available signaling connections
     signalingConns.forEach(conn => {
       if (conn.connected) {
-        conn.send({ type: 'unsubscribe', channel: this.name })
+        conn.send({ type: 'unsubscribe', channelId: this.name })
       }
     })
     awarenessProtocol.removeAwarenessStates(this.awareness, [this.doc.clientID], 'disconnect')
@@ -475,10 +475,10 @@ const openRoom = (doc, provider, name, key) => {
 const publishSignalingMessage = (conn, room, data) => {
   if (room.key) {
     cryptoutils.encryptJson(data, room.key).then(data => {
-      conn.send({ type: 'publish', channel: room.name, data: buffer.toBase64(data) })
+      conn.send({ type: 'publish', channelId: room.name, data: buffer.toBase64(data) })
     })
   } else {
-    conn.send({ type: 'publish', channel: room.name, data })
+    conn.send({ type: 'publish', channelId: room.name, data })
   }
 }
 
@@ -493,7 +493,7 @@ export class SignalingConn extends ws.WebsocketClient {
       log(`connected (${url})`)
       rooms.forEach(room =>
         {
-          this.send({ type: 'subscribe', channel: room.name, ...room.provider.additional })
+          this.send({ type: 'subscribe', channelId: room.name, ...room.provider.additional })
           publishSignalingMessage(this, room, { type: 'announce', from: room.peerId });
         }
       )
@@ -501,7 +501,7 @@ export class SignalingConn extends ws.WebsocketClient {
     this.on('message', m => {
       switch (m.type) {
         case 'publish': {
-          const roomName = m.channel
+          const roomName = m.channelId
           const room = rooms.get(roomName)
           if (room == null || typeof roomName !== 'string') {
             return
@@ -567,7 +567,7 @@ export class SignalingConn extends ws.WebsocketClient {
         }
         case 'syncStep1':
         case 'syncStep2': {
-          const roomName = m.channel;
+          const roomName = m.channelId;
           const room = rooms.get(roomName);
           if (room == null || typeof roomName !== 'string') {
             return;
