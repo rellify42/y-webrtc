@@ -1,9 +1,9 @@
 
 import * as crypto from './crypto.test.js'
 
-import { runTests } from 'lib0/testing'
-import { isBrowser, isNode } from 'lib0/environment'
-import * as log from 'lib0/logging'
+import { runTests } from '@rellify42/lib0/testing'
+import { isBrowser, isNode } from '@rellify42/lib0/environment'
+import * as log from '@rellify42/lib0/logging'
 
 if (isBrowser) {
   log.createVConsole(document.body)

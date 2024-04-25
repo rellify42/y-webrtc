@@ -1,7 +1,7 @@
 
 import * as cryptutils from '../src/crypto'
-import * as t from 'lib0/testing'
-import * as prng from 'lib0/prng'
+import * as t from '@rellify42/lib0/testing'
+import * as prng from '@rellify42/lib0/prng'
 
 /**
  * @param {t.TestCase} tc

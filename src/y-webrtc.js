@@ -1,16 +1,16 @@
-import * as ws from 'lib0/websocket'
-import * as map from 'lib0/map'
-import * as error from 'lib0/error'
-import * as random from 'lib0/random'
-import * as encoding from 'lib0/encoding'
-import * as decoding from 'lib0/decoding'
-import { ObservableV2 } from 'lib0/observable'
-import * as logging from 'lib0/logging'
-import * as promise from 'lib0/promise'
-import * as bc from 'lib0/broadcastchannel'
-import * as buffer from 'lib0/buffer'
-import * as math from 'lib0/math'
-import { createMutex } from 'lib0/mutex'
+import * as ws from '@rellify42/lib0/websocket'
+import * as map from '@rellify42/lib0/map'
+import * as error from '@rellify42/lib0/error'
+import * as random from '@rellify42/lib0/random'
+import * as encoding from '@rellify42/lib0/encoding'
+import * as decoding from '@rellify42/lib0/decoding'
+import { ObservableV2 } from '@rellify42/lib0/observable'
+import * as logging from '@rellify42/lib0/logging'
+import * as promise from '@rellify42/lib0/promise'
+import * as bc from '@rellify42/lib0/broadcastchannel'
+import * as buffer from '@rellify42/lib0/buffer'
+import * as math from '@rellify42/lib0/math'
+import { createMutex } from '@rellify42/lib0/mutex'
 
 import * as Y from 'yjs' // eslint-disable-line
 import Peer from 'simple-peer/simplepeer.min.js'
@@ -483,8 +483,8 @@ const publishSignalingMessage = (conn, room, data) => {
 }
 
 export class SignalingConn extends ws.WebsocketClient {
-  constructor (url) {
-    super(url)
+  constructor (url, getQueryParameters) {
+    super(url, { getQueryParameters })
     /**
      * @type {Set<WebrtcProvider>}
      */
@@ -621,6 +621,8 @@ export class SignalingConn extends ws.WebsocketClient {
  * @property {number} [maxConns]
  * @property {boolean} [filterBcConns]
  * @property {any} [peerOpts]
+ * @property {object} additional
+ * @property {(() => Promise<string>)?} getQueryParameters
  */
 
 /**
@@ -647,7 +649,7 @@ export class WebrtcProvider extends ObservableV2 {
    * @param {string} roomName
    * @param {Y.Doc} doc
    * @param {ProviderOptions?} opts
-   * @param {object} additional
+   * 
    */
   constructor (
     roomName,
@@ -658,11 +660,13 @@ export class WebrtcProvider extends ObservableV2 {
       awareness = new awarenessProtocol.Awareness(doc),
       maxConns = 20 + math.floor(random.rand() * 15), // the random factor reduces the chance that n clients form a cluster
       filterBcConns = true,
-      peerOpts = {} // simple-peer options. See https://github.com/feross/simple-peer#peer--new-peeropts
-    } = {},
-    additional = {}
+      peerOpts = {}, // simple-peer options. See https://github.com/feross/simple-peer#peer--new-peeropts,
+      additional = {},
+      getQueryParameters = null
+    } = { additional: {}, getQueryParameters: null }
   ) {
     super()
+    this.getQueryParameters = getQueryParameters;
     this.additional = additional;
     this.roomName = roomName
     this.doc = doc
@@ -717,7 +721,7 @@ export class WebrtcProvider extends ObservableV2 {
   connect () {
     this.shouldConnect = true
     this.signalingUrls.forEach(url => {
-      const signalingConn = map.setIfUndefined(signalingConns, url, () => new SignalingConn(url))
+      const signalingConn = map.setIfUndefined(signalingConns, url, () => new SignalingConn(url, this.getQueryParameters))
       this.signalingConns.push(signalingConn)
       signalingConn.providers.add(this)
     })

@@ -1,6 +1,6 @@
 {
   "name": "@rellify42/y-webrtc",
-  "version": "10.3.0i",
+  "version": "10.3.0n",
   "description": "WebRTC provider for Yjs",
   "type": "module",
   "main": "./dist/y-webrtc.cjs",
@@ -61,7 +61,7 @@
     ]
   },
   "dependencies": {
-    "lib0": "^0.2.42",
+    "@rellify42/lib0": "0.2.93-b",
     "simple-peer": "^9.11.0",
     "y-protocols": "^1.0.6"
   },

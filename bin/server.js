@@ -2,7 +2,7 @@
 
 import { WebSocketServer } from 'ws'
 import http from 'http'
-import * as map from 'lib0/map'
+import * as map from '@rellify42/lib0/map'
 
 const wsReadyStateConnecting = 0
 const wsReadyStateOpen = 1
